@@ -19,8 +19,11 @@ export default function Preloader() {
 
   useEffect(() => {
     if (phase !== "loading") return;
-    document.body.style.overflow = "hidden";
+    // Capture BEFORE locking — reading after the assignment would store
+    // "hidden" as the previous value and never unlock scrolling again,
+    // which breaks native touch scrolling on phones/tablets.
     const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const controls = animate(0, 100, {
