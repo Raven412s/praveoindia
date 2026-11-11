@@ -53,9 +53,10 @@ function StepVisual({ Icon }: { Icon: LucideIcon }) {
   return (
     <div
       data-hiw-visual
-      className="relative grid aspect-square w-full max-w-[280px]
+      className="relative grid aspect-square w-full max-w-[200px]
         place-items-center overflow-hidden rounded-full
-        border border-(--ink)/15 bg-(--card)"
+        border border-(--ink)/15 bg-(--card)
+        min-[820px]:max-w-[280px]"
     >
       {/* Single quiet ring */}
       <div className="absolute inset-[10%] rounded-full border border-(--ink)/10" />
@@ -478,6 +479,63 @@ export default function HowItWorks() {
       }
     );
 
+    // Mobile / tablet portrait: the user keeps scrolling down normally,
+    // but the steps travel right-to-left — one pinned story per screen.
+    mm.add(
+      "(max-width: 819.98px) and (prefers-reduced-motion: no-preference)",
+      () => {
+        const stage = root.querySelector<HTMLDivElement>("[data-hiw-stage]");
+        if (!stage) return;
+
+        // Horizontal layout is opt-in via CSS ([data-hiw-h]) so users with
+        // reduced motion — where no JS driver runs — still get the plain
+        // stacked list instead of an undrivable track.
+        root.setAttribute("data-hiw-h", "");
+
+        const total = STEPS.length;
+
+        const getDistance = () =>
+          Math.max(0, slides.scrollWidth - stage.clientWidth);
+
+        const tween = gsap.to(slides, {
+          x: () => -getDistance(),
+          ease: "none",
+          scrollTrigger: {
+            trigger: stage,
+            start: "top 120px",
+            end: () => `+=${getDistance()}`,
+            pin: true,
+            scrub: 0.8,
+            anticipatePin: 1,
+            invalidateOnRefresh: true,
+            onUpdate: (self) => {
+              const idx = Math.min(
+                total - 1,
+                Math.floor(self.progress * total)
+              );
+              if (counterRef.current) {
+                counterRef.current.textContent =
+                  `${pad(idx + 1)} / ${pad(total)}`;
+              }
+              gsap.set(bar, { scaleX: self.progress });
+            },
+            onLeave: () => {
+              if (counterRef.current) {
+                counterRef.current.textContent =
+                  `${pad(total)} / ${pad(total)}`;
+              }
+            },
+          },
+        });
+
+        return () => {
+          root.removeAttribute("data-hiw-h");
+          tween.scrollTrigger?.kill();
+          tween.kill();
+        };
+      }
+    );
+
     return () => {
       mm.revert();
     };
@@ -489,54 +547,16 @@ export default function HowItWorks() {
       id="how"
       className="relative overflow-clip pb-24 pt-4"
     >
-      {/* Story stage — heading, progress and panels all live in the pin */}
+      {/* Story stage — heading, progress and panels all live in the pin.
+          Block on mobile (ScrollTrigger pin-spacing breaks inside flex
+          containers); flex column on desktop drives the slide order. */}
       <div
         ref={pinRef}
-        className="relative mx-auto w-full max-w-[1160px] px-5"
+        className="relative mx-auto w-full max-w-[1160px] px-5
+          min-[820px]:flex min-[820px]:flex-col"
       >
-   {/* Panels */}
-        <div
-          ref={slidesRef}
-          className="grid gap-10 min-[820px]:relative min-[820px]:min-h-[470px]"
-        >
-          {STEPS.map((step) => (
-            <article
-              key={step.title}
-              data-hiw-panel
-              className="relative flex flex-col justify-between gap-10
-                min-[820px]:absolute min-[820px]:inset-0
-                min-[820px]:grid min-[820px]:grid-cols-[1.15fr_0.85fr]
-                min-[820px]:items-center min-[820px]:gap-12"
-            >
-              {/* Copy */}
-              <div className="relative z-10">
-                <p className="mb-6 flex items-center gap-3
-                  text-[11px] font-black uppercase tracking-[0.2em] opacity-55">
-                  <span className="h-px w-8 bg-(--c)" />
-                  {step.eyebrow}
-                </p>
-
-                <h3 className="text-[clamp(54px,8vw,100px)]
-                  font-black leading-[0.88] tracking-[-0.065em]">
-                  {step.title}
-                </h3>
-
-                <p className="mt-6 max-w-[440px] text-[17px]
-                  leading-[1.7] opacity-70 min-[820px]:text-[19px]">
-                  {step.text}
-                </p>
-              </div>
-
-              {/* Visual */}
-              <div className="flex justify-center min-[820px]:justify-end">
-                <StepVisual Icon={step.Icon} />
-              </div>
-            </article>
-          ))}
-        </div>
-
-        {/* Section heading */}
-        <Reveal>
+        {/* Section heading — reads first on mobile; sits under the stage on desktop */}
+        <Reveal className="pb-10 min-[820px]:order-2 min-[820px]:pb-0">
           <div className="flex items-center gap-3">
             <span className="size-2 rounded-full bg-(--c)" />
             <p className="text-xs font-black uppercase tracking-[0.2em]">
@@ -559,26 +579,79 @@ export default function HowItWorks() {
           </div>
         </Reveal>
 
-        {/* Progress header — one counter, one rail, nothing else */}
-        <div className="mb-6 mt-6 flex items-center gap-5">
-          <p
-            ref={counterRef}
-            className="min-w-[70px] text-[11px] font-black
-              tabular-nums tracking-[0.16em]"
-          >
-            01 / 04
-          </p>
+        {/* Pinned stage. Mobile: one story per screen — the panels travel
+            right-to-left while the user scrolls down. Desktop: display
+            contents, so the panels/heading/progress stay direct flex
+            children of the pin exactly as before. */}
+        <div
+          data-hiw-stage
+          className="flex min-h-[calc(100svh-180px)] flex-col
+            justify-center overflow-clip
+            min-[820px]:order-3 min-[820px]:contents"
+        >
+          {/* Progress header — one counter, one rail, nothing else */}
+          <div className="mb-4 flex items-center gap-5
+            min-[820px]:order-3 min-[820px]:mb-6 min-[820px]:mt-6">
+            <p
+              ref={counterRef}
+              className="min-w-[70px] text-[11px] font-black
+                tabular-nums tracking-[0.16em]"
+            >
+              01 / 04
+            </p>
 
-          <div className="h-[2px] flex-1 overflow-hidden bg-(--ink)/10">
-            <div
-              ref={barRef}
-              className="h-full origin-left bg-(--c)"
-              style={{ transform: "scaleX(0)" }}
-            />
+            <div className="h-[2px] flex-1 overflow-hidden bg-(--ink)/10">
+              <div
+                ref={barRef}
+                className="h-full origin-left bg-(--c)"
+                style={{ transform: "scaleX(0)" }}
+              />
+            </div>
+          </div>
+
+          {/* Panels */}
+          <div
+            ref={slidesRef}
+            data-hiw-track
+            className="grid gap-10
+              min-[820px]:relative min-[820px]:order-1 min-[820px]:min-h-[470px]"
+          >
+            {STEPS.map((step) => (
+              <article
+                key={step.title}
+                data-hiw-panel
+                className="relative flex flex-col justify-between gap-7
+                  min-[820px]:absolute min-[820px]:inset-0
+                  min-[820px]:grid min-[820px]:grid-cols-[1.15fr_0.85fr]
+                  min-[820px]:items-center min-[820px]:gap-12"
+              >
+                {/* Copy */}
+                <div className="relative z-10">
+                  <p className="mb-6 flex items-center gap-3
+                    text-[11px] font-black uppercase tracking-[0.2em] opacity-55">
+                    <span className="h-px w-8 bg-(--c)" />
+                    {step.eyebrow}
+                  </p>
+
+                  <h3 className="text-[clamp(54px,8vw,100px)]
+                    font-black leading-[0.88] tracking-[-0.065em]">
+                    {step.title}
+                  </h3>
+
+                  <p className="mt-6 max-w-[440px] text-[17px]
+                    leading-[1.7] opacity-70 min-[820px]:text-[19px]">
+                    {step.text}
+                  </p>
+                </div>
+
+                {/* Visual */}
+                <div className="flex justify-center min-[820px]:justify-end">
+                  <StepVisual Icon={step.Icon} />
+                </div>
+              </article>
+            ))}
           </div>
         </div>
-
-     
       </div>
     </section>
   );

@@ -1,3 +1,6 @@
+"use client";
+
+import { useCursorElement } from "@/components/globals/cursor/advance-cursor";
 import Reveal from "./Reveal";
 
 const PILLARS = [
@@ -9,8 +12,19 @@ const PILLARS = [
 ];
 
 export default function Standard() {
+  // Inverted ink section — the default follower is var(--ink) (same colour
+  // as this background), so flip it to white while hovering here.
+  const cursor = useCursorElement({
+    state: "default",
+    backgroundColor: "#ffffff",
+  });
+
   return (
-    <section id="standard" className="bg-(--ink) py-20 text-(--bg)">
+    <section
+      id="standard"
+      {...cursor}
+      className="bg-(--ink) py-20 text-(--bg)"
+    >
       <div className="mx-auto w-full max-w-[1160px] px-5">
         <Reveal>
           <p className="text-xs font-extrabold uppercase tracking-[0.16em]">

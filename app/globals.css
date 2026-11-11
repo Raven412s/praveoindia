@@ -224,6 +224,33 @@ html.lenis body {
 }
 
 /* ------------------------------------------------------------------ */
+/* How it works — mobile (<820px)                                      */
+/* The pinned GSAP story only runs on desktop; on mobile the steps are */
+/* a plain stacked list, so the QR scan line stays hidden (desktop     */
+/* GSAP reveals it with inline styles, which always win over this).    */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 819.98px) {
+  #how [data-hiw-scan] {
+    opacity: 0;
+  }
+}
+
+/* How it works — mobile horizontal story. When JS is driving the pinned
+   right-to-left track (<820px + motion allowed) the section carries
+   [data-hiw-h]; without it the steps remain a plain stacked list. */
+#how[data-hiw-h] [data-hiw-track] {
+  display: flex;
+  width: max-content;
+  gap: 24px;
+}
+
+#how[data-hiw-h] [data-hiw-track] > [data-hiw-panel] {
+  width: calc(100vw - 40px);
+  flex-shrink: 0;
+}
+
+/* ------------------------------------------------------------------ */
 /* How it works — pinned step story                                    */
 /* [data-hiw-live] is set from JS only when motion is allowed;         */
 /* without it the steps remain a plain stacked list.                   */
