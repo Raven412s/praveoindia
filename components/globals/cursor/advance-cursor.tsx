@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/refs */
 "use client";
 
 /**
@@ -10,6 +9,16 @@
  * Rebranded for PRAVEO: the follower draws in var(--ink) with var(--bg)
  * labels, and uses Montserrat. The demo components from the source file were
  * removed — only the provider, follower and hooks are kept.
+ *
+ * Cross-device consistency:
+ *  - The follower renders whenever a mouse-like pointer exists. Detection is
+ *    pointer-capability based (see useHasMousePointer), so touchscreen
+ *    laptops and trackpads are no longer mistaken for touch-only devices.
+ *  - prefers-reduced-motion never removes the follower (it is pointer UI,
+ *    not decoration): motion degrades to instant, un-stretched following.
+ *  - All easing is delta-time based, so 60Hz and 144Hz displays feel identical.
+ *  - `cursor: none` is scoped to the same md breakpoint that shows the
+ *    follower, so narrow windows never end up with no cursor at all.
  */
 
 import {
@@ -29,7 +38,8 @@ import {
   type Dispatch,
   type SetStateAction,
 } from "react";
-import { useIsTouchDevice } from "@/hooks/use-is-touch-device";
+import { useHasMousePointer } from "@/hooks/use-has-mouse-pointer";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 export type CursorState =
   | "default"
@@ -113,6 +123,10 @@ const DEFAULT_CONFIG: CursorConfig = {
   skewingDeltaMax: 0.15,
 };
 
+// Stable identity for the default prop so the memoised config (and therefore
+// the RAF loop) is not rebuilt on every provider render when no config passed.
+const NO_CONFIG: Partial<CursorConfig> = {};
+
 const SCALE_MAP: Record<EffectiveState, number> = {
   default: 0.5,
   pointer: 0.3,
@@ -136,7 +150,7 @@ export interface CursorProviderProps {
 
 export function CursorProvider({
   children,
-  config = {},
+  config = NO_CONFIG,
 }: CursorProviderProps): JSX.Element {
   const [cursorState, setCursorState] = useState<CursorState>("default");
   const [label, setLabel] = useState<LabelPayload>({ kind: "none" });
@@ -147,7 +161,7 @@ export function CursorProvider({
   const [customCircleOpacity, setCustomCircleOpacity] = useState<number | undefined>(undefined);
   const [customCircleSize, setCustomCircleSize] = useState<number | undefined>(undefined);
   const [mediaShape, setMediaShape] = useState<"circle" | "window">("circle");
-  const isTouchDevice = useIsTouchDevice();
+  const hasMouse = useHasMousePointer();
 
   const cfg: CursorConfig = useMemo(
     () => ({ ...DEFAULT_CONFIG, ...config }),
@@ -182,7 +196,7 @@ export function CursorProvider({
   return (
     <CursorContext.Provider value={{ setState, resetState, setIsActive, isActive }}>
       {children}
-      {!isTouchDevice && (
+      {hasMouse && (
         <MouseFollower
           cursorState={cursorState}
           label={label}
@@ -223,8 +237,21 @@ interface UseMouseFollowerReturn {
   stateRef: MutableRefObject<CursorState>;
 }
 
-function useMouseFollower(config: CursorConfig): UseMouseFollowerReturn {
+/**
+ * Turn a per-frame smoothing factor (tuned at 60fps) into the equivalent
+ * factor for a frame lasting `dtFrames` 60fps-frames. Without this the
+ * follower moves ~2.4x faster on a 144Hz screen than on a 60Hz one.
+ */
+function dampen(perFrame: number, dtFrames: number): number {
+  return 1 - Math.pow(1 - perFrame, dtFrames);
+}
+
+function useMouseFollower(
+  config: CursorConfig,
+  reducedMotion: boolean
+): UseMouseFollowerReturn {
   const rafRef = useRef<number | null>(null);
+  const lastTimeRef = useRef<number>(0);
   const mouseRef = useRef<Vec2>({ x: -400, y: -400 });
   const posRef = useRef<Vec2>({ x: -400, y: -400 });
   const dirRef = useRef<Vec2>({ x: 1, y: 0 });
@@ -246,16 +273,20 @@ function useMouseFollower(config: CursorConfig): UseMouseFollowerReturn {
   );
 
   useEffect(() => {
+    // Mutate in place — allocating a fresh {x, y} on every mousemove meant a
+    // small GC churn for every pixel of travel.
     const onMove = (e: MouseEvent): void => {
-      mouseRef.current = { x: e.clientX, y: e.clientY };
+      mouseRef.current.x = e.clientX;
+      mouseRef.current.y = e.clientY;
       if (!visRef.current) {
-        posRef.current = { x: e.clientX, y: e.clientY };
+        posRef.current.x = e.clientX;
+        posRef.current.y = e.clientY;
         visRef.current = true;
       }
     };
     const onLeave = (): void => { visRef.current = false; };
     const onEnter = (): void => { visRef.current = true; };
-    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mousemove", onMove, { passive: true });
     document.addEventListener("mouseleave", onLeave);
     document.addEventListener("mouseenter", onEnter);
     return () => {
@@ -266,40 +297,59 @@ function useMouseFollower(config: CursorConfig): UseMouseFollowerReturn {
   }, []);
 
   useEffect(() => {
-    const loop = (): void => {
+    const loop = (now: number): void => {
+      // Clamp after tab switches/backgrounding so the follower doesn't jump.
+      const dtSeconds = lastTimeRef.current > 0
+        ? Math.min((now - lastTimeRef.current) / 1000, 0.1)
+        : 1 / 60;
+      lastTimeRef.current = now;
+      const dtFrames = dtSeconds * 60;
+
       const { x: mx, y: my } = mouseRef.current;
-      const pos = posRef.current;
 
-      pos.x = lerp(pos.x, mx, config.speed);
-      pos.y = lerp(pos.y, my, config.speed);
+      if (reducedMotion) {
+        // Reduced motion: follow instantly, no stretch/skew. The follower
+        // stays fully functional but adds no animation of its own.
+        posRef.current.x = mx;
+        posRef.current.y = my;
+        stretchRef.current = 0;
+        onFrameRef.current?.(mx, my, 0, 0, visRef.current);
+      } else {
+        const pos = posRef.current;
 
-      const velX = mx - pos.x;
-      const velY = my - pos.y;
-      const speed = Math.hypot(velX, velY);
-      const sf = getSkewing(stateRef.current);
+        pos.x = lerp(pos.x, mx, dampen(config.speed, dtFrames));
+        pos.y = lerp(pos.y, my, dampen(config.speed, dtFrames));
 
-      // Only update the stretch direction once movement is meaningful —
-      // stops the axis from jittering/flipping when the cursor is nearly still.
-      if (speed > 0.6) {
-        const nx = velX / speed;
-        const ny = velY / speed;
-        dirRef.current.x = lerp(dirRef.current.x, nx, 0.25);
-        dirRef.current.y = lerp(dirRef.current.y, ny, 0.25);
+        const velX = mx - pos.x;
+        const velY = my - pos.y;
+        const speed = Math.hypot(velX, velY);
+        const sf = getSkewing(stateRef.current);
+
+        // Only update the stretch direction once movement is meaningful —
+        // stops the axis from jittering/flipping when the cursor is nearly still.
+        if (speed > 0.6) {
+          const nx = velX / speed;
+          const ny = velY / speed;
+          const dirT = dampen(0.25, dtFrames);
+          dirRef.current.x = lerp(dirRef.current.x, nx, dirT);
+          dirRef.current.y = lerp(dirRef.current.y, ny, dirT);
+        }
+        const dLen = Math.hypot(dirRef.current.x, dirRef.current.y) || 1;
+        const angleDeg = Math.atan2(dirRef.current.y / dLen, dirRef.current.x / dLen) * (180 / Math.PI);
+
+        const targetStretch = clamp(speed * config.skewingDelta * sf, 0, config.skewingDeltaMax);
+        // Snap into the stretch quickly, relax out of it slowly — reads as
+        // elastic, not jittery.
+        const ease = dampen(targetStretch > stretchRef.current ? 0.35 : 0.1, dtFrames);
+        stretchRef.current = lerp(stretchRef.current, targetStretch, ease);
+
+        onFrameRef.current?.(pos.x, pos.y, angleDeg, stretchRef.current, visRef.current);
       }
-      const dLen = Math.hypot(dirRef.current.x, dirRef.current.y) || 1;
-      const angleDeg = Math.atan2(dirRef.current.y / dLen, dirRef.current.x / dLen) * (180 / Math.PI);
-
-      const targetStretch = clamp(speed * config.skewingDelta * sf, 0, config.skewingDeltaMax);
-      // Snap into the stretch quickly, relax out of it slowly — reads as elastic, not jittery.
-      const ease = targetStretch > stretchRef.current ? 0.35 : 0.1;
-      stretchRef.current = lerp(stretchRef.current, targetStretch, ease);
-
-      onFrameRef.current?.(pos.x, pos.y, angleDeg, stretchRef.current, visRef.current);
       rafRef.current = requestAnimationFrame(loop);
     };
     rafRef.current = requestAnimationFrame(loop);
     return () => { if (rafRef.current !== null) cancelAnimationFrame(rafRef.current); };
-  }, [config, getSkewing]);
+  }, [config, getSkewing, reducedMotion]);
 
   return { onFrameRef, stateRef };
 }
@@ -319,21 +369,40 @@ function MouseFollower({
   cursorState, label, mediaSrc, isActive, config, customTextColor, customBgColor, circleOpacity, circleSize, mediaShape
 }: MouseFollowerProps): JSX.Element {
   const rootRef = useRef<HTMLDivElement>(null);
-  const { onFrameRef, stateRef } = useMouseFollower(config);
+  const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const { onFrameRef, stateRef } = useMouseFollower(config, reducedMotion);
+  // Last frame written to the DOM — used to skip redundant style writes while
+  // the follower is idle (saves ~60 style writes/sec per tab).
+  const lastFrameRef = useRef({ x: NaN, y: NaN, angle: 0, stretch: 0, visible: false });
 
   useEffect(() => { stateRef.current = cursorState; }, [cursorState, stateRef]);
 
-  onFrameRef.current = (x, y, angleDeg, stretch, visible): void => {
-    if (!rootRef.current) return;
-    rootRef.current.style.opacity = visible ? "1" : "0";
-    // Stretch the cursor along its direction of travel — like a droplet
-    // being pulled — instead of shearing X and Y independently. Reads as
-    // a single natural elastic motion regardless of which way you move.
-    const stretchX = 1 + stretch * 1.6;
-    const stretchY = 1 - stretch * 0.6;
-    rootRef.current.style.transform =
-      `translate3d(${x}px,${y}px,0) rotate(${angleDeg}deg) scale(${stretchX},${stretchY}) rotate(${-angleDeg}deg)`;
-  };
+  useEffect(() => {
+    onFrameRef.current = (x, y, angleDeg, stretch, visible): void => {
+      const el = rootRef.current;
+      if (!el) return;
+      const p = lastFrameRef.current;
+      if (
+        visible === p.visible &&
+        Math.abs(x - p.x) < 0.01 &&
+        Math.abs(y - p.y) < 0.01 &&
+        Math.abs(angleDeg - p.angle) < 0.01 &&
+        Math.abs(stretch - p.stretch) < 0.0005
+      ) {
+        return; // nothing perceptibly changed — skip the style write
+      }
+      p.x = x; p.y = y; p.angle = angleDeg; p.stretch = stretch; p.visible = visible;
+      el.style.opacity = visible ? "1" : "0";
+      // Stretch the cursor along its direction of travel — like a droplet
+      // being pulled — instead of shearing X and Y independently. Reads as
+      // a single natural elastic motion regardless of which way you move.
+      const stretchX = 1 + stretch * 1.6;
+      const stretchY = 1 - stretch * 0.6;
+      el.style.transform =
+        `translate3d(${x}px,${y}px,0) rotate(${angleDeg}deg) scale(${stretchX},${stretchY}) rotate(${-angleDeg}deg)`;
+    };
+    return () => { onFrameRef.current = null; };
+  }, [onFrameRef]);
 
   const effectiveState: EffectiveState =
     isActive && ACTIVE_OVERRIDE_STATES.includes(cursorState) ? "active" : cursorState;
@@ -395,7 +464,10 @@ function MouseFollower({
     background: customBgColor || "var(--ink)",
     transform: `scale(${scale})`,
     opacity: circleOpacity !== undefined ? circleOpacity : 1,
-    transition: `transform ${isActive ? ".1s" : ".25s"} ease-in-out, opacity .1s, background .4s`,
+    // Reduced motion: transforms snap instead of animating.
+    transition: reducedMotion
+      ? "opacity .1s, background .4s"
+      : `transform ${isActive ? ".1s" : ".25s"} ease-in-out, opacity .1s, background .4s`,
   };
 
   const resolvedTextColor = customTextColor ||
@@ -421,7 +493,7 @@ function MouseFollower({
     lineHeight: 1.2,
     opacity: labelVisible ? 1 : 0,
     transform: labelVisible ? "scale(1) rotate(0deg)" : "scale(0) rotate(10deg)",
-    transition: "opacity .4s, transform .3s",
+    transition: reducedMotion ? "opacity .4s" : "opacity .4s, transform .3s",
     pointerEvents: "none",
     whiteSpace: "nowrap",
   };
@@ -435,12 +507,16 @@ function MouseFollower({
     padding: 1,
     opacity: isMedia ? 1 : 0,
     transform: isMedia ? "scale(0.696) translateZ(0)" : "scale(0) translateZ(0)",
-    transition: "transform .4s, opacity .4s, border-radius .4s",
+    transition: reducedMotion
+      ? "opacity .4s"
+      : "transform .4s, opacity .4s, border-radius .4s",
   };
 
   return (
     <>
-      <style>{`html, *, *:hover { cursor: none !important; }`}</style>
+      {/* Hide the native cursor on exactly the viewports where the follower
+          shows (md+), so narrow windows keep a usable native cursor. */}
+      <style>{`@media (min-width: 768px) { html, *, *:hover { cursor: none !important; } }`}</style>
 
       <div ref={rootRef} style={rootStyle} className="hidden md:block">
         {/* Circle */}
