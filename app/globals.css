@@ -250,6 +250,13 @@ html.lenis body {
   flex-shrink: 0;
 }
 
+/* Short phones: keep the pinned heading + story inside one screen. */
+@media (max-width: 819.98px) and (max-height: 740px) {
+  #how[data-hiw-h] [data-hiw-visual] {
+    width: 150px;
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /* How it works — pinned step story                                    */
 /* [data-hiw-live] is set from JS only when motion is allowed;         */

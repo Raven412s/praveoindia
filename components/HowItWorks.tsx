@@ -555,8 +555,20 @@ export default function HowItWorks() {
         className="relative mx-auto w-full max-w-[1160px] px-5
           min-[820px]:flex min-[820px]:flex-col"
       >
-        {/* Section heading — reads first on mobile; sits under the stage on desktop */}
-        <Reveal className="pb-10 min-[820px]:order-2 min-[820px]:pb-0">
+        {/* Pinned stage. Mobile: heading, progress and one story per screen —
+            the panels travel right-to-left while the user scrolls down, and
+            the heading stays pinned on screen. Desktop: display contents, so
+            the panels/heading/progress stay direct flex children of the pin
+            exactly as before. */}
+        <div
+          data-hiw-stage
+          className="flex min-h-[calc(100svh-180px)] flex-col
+            justify-center overflow-clip
+            min-[820px]:order-3 min-[820px]:contents"
+        >
+          {/* Section heading — pinned on mobile during the story; reads as a
+              caption under the stage on desktop */}
+          <Reveal className="pb-4 min-[820px]:order-2 min-[820px]:pb-0">
           <div className="flex items-center gap-3">
             <span className="size-2 rounded-full bg-(--c)" />
             <p className="text-xs font-black uppercase tracking-[0.2em]">
@@ -579,16 +591,6 @@ export default function HowItWorks() {
           </div>
         </Reveal>
 
-        {/* Pinned stage. Mobile: one story per screen — the panels travel
-            right-to-left while the user scrolls down. Desktop: display
-            contents, so the panels/heading/progress stay direct flex
-            children of the pin exactly as before. */}
-        <div
-          data-hiw-stage
-          className="flex min-h-[calc(100svh-180px)] flex-col
-            justify-center overflow-clip
-            min-[820px]:order-3 min-[820px]:contents"
-        >
           {/* Progress header — one counter, one rail, nothing else */}
           <div className="mb-4 flex items-center gap-5
             min-[820px]:order-3 min-[820px]:mb-6 min-[820px]:mt-6">
