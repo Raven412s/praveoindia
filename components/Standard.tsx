@@ -2,18 +2,19 @@
 
 import { useCursorElement } from "@/components/globals/cursor/advance-cursor";
 import Reveal from "./Reveal";
+import SectionHeading from "./SectionHeading";
 
 const PILLARS = [
-  { title: "Clean", text: "Visible prep surfaces, daily cleaning routines." },
-  { title: "Fresh", text: "Covered ingredients, planned prep." },
-  { title: "Consistent", text: "Same recipes, portions and service." },
-  { title: "Fast", text: "Focused menu, clear workflow." },
-  { title: "Honest", text: "Clear menu info, real claims only." },
+  { title: "Clean", text: "Visible prep surfaces, daily cleaning routines and disciplined storage." },
+  { title: "Fresh", text: "Covered ingredients, planned prep and food made in small, frequent batches." },
+  { title: "Consistent", text: "The same recipes, portions and service on every PRAVEO cart." },
+  { title: "Fast", text: "A focused menu and a clear workflow, so good food never means a long wait." },
+  { title: "Honest", text: "Clear menu information and real claims only — no fine print." },
 ];
 
 export default function Standard() {
-  // Inverted ink section — the default follower is var(--ink) (same colour
-  // as this background), so flip it to white while hovering here.
+  // The custom follower draws in var(--ink); keep it legible on the dark band
+  // even though the editorial build presents the native cursor.
   const cursor = useCursorElement({
     state: "default",
     backgroundColor: "#ffffff",
@@ -23,28 +24,40 @@ export default function Standard() {
     <section
       id="standard"
       {...cursor}
-      className="bg-(--ink) py-20 text-(--bg)"
+      className="bg-(--deep) py-24 text-(--deep-ink)"
     >
-      <div className="mx-auto w-full max-w-[1160px] px-5">
+      <div className="mx-auto w-full max-w-[1180px] px-5">
         <Reveal>
-          <p className="text-xs font-extrabold uppercase tracking-[0.16em]">
-            THE PRAVEO STANDARD
-          </p>
-          <h2 className="mt-3 text-[clamp(32px,5vw,56px)] font-black leading-[1.02] tracking-[-0.02em]">
-            Good food. Done right.
-          </h2>
-          <p className="mt-4 max-w-[600px] text-[17px] opacity-85">
-            Hygiene isn’t a claim here — it’s visible behaviour on every cart.
-          </p>
+          <SectionHeading
+            eyebrow="The PRAVEO standard"
+            title={
+              <>
+                Good food.
+                <br />
+                <span className="italic">Done right.</span>
+              </>
+            }
+            description="Hygiene isn’t a claim here — it’s visible behaviour on every cart. These are the five things that never change, whatever the concept."
+            dark
+          />
         </Reveal>
-        <Reveal className="mt-10" y={32}>
-          <ul className="grid list-none grid-cols-1 gap-4 min-[480px]:grid-cols-2 min-[900px]:grid-cols-5">
-            {PILLARS.map((pillar) => (
-              <li key={pillar.title} className="rounded-[18px] border-2 border-(--bg) p-5">
-                <h3 className="text-[18px] font-black uppercase tracking-[0.06em]">
+
+        <Reveal className="mt-14" y={26}>
+          <ul className="grid list-none grid-cols-1 border-t border-(--deep-ink)/15 min-[640px]:grid-cols-2 min-[980px]:grid-cols-5">
+            {PILLARS.map((pillar, index) => (
+              <li
+                key={pillar.title}
+                className="border-b border-(--deep-ink)/15 py-6 min-[640px]:pr-6 min-[980px]:border-b-0 min-[980px]:border-r min-[980px]:pl-6 min-[980px]:first:pl-0 min-[980px]:last:border-r-0"
+              >
+                <p className="font-serif text-[12px] italic text-(--deep-ink)/40">
+                  {String(index + 1).padStart(2, "0")}
+                </p>
+                <h3 className="mt-4 text-[10px] font-semibold uppercase tracking-[0.2em]">
                   {pillar.title}
                 </h3>
-                <p className="mt-2 text-[14px] opacity-80">{pillar.text}</p>
+                <p className="mt-3 max-w-[190px] text-[12.5px] leading-[1.7] text-(--deep-ink)/60">
+                  {pillar.text}
+                </p>
               </li>
             ))}
           </ul>

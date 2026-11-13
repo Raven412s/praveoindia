@@ -146,11 +146,18 @@ const CursorContext = createContext<CursorContextValue | null>(null);
 export interface CursorProviderProps {
   children: ReactNode;
   config?: Partial<CursorConfig>;
+  /**
+   * The editorial build keeps the native cursor. The follower is retained for
+   * future campaigns, but off by default — a lagging custom cursor reads as a
+   * gimmick against the calmer, more professional direction.
+   */
+  enabled?: boolean;
 }
 
 export function CursorProvider({
   children,
   config = NO_CONFIG,
+  enabled = false,
 }: CursorProviderProps): JSX.Element {
   const [cursorState, setCursorState] = useState<CursorState>("default");
   const [label, setLabel] = useState<LabelPayload>({ kind: "none" });
@@ -196,7 +203,7 @@ export function CursorProvider({
   return (
     <CursorContext.Provider value={{ setState, resetState, setIsActive, isActive }}>
       {children}
-      {hasMouse && (
+      {enabled && hasMouse && (
         <MouseFollower
           cursorState={cursorState}
           label={label}

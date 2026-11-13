@@ -20,7 +20,7 @@ export const concepts: Concept[] = [
     whatsOn: "Eggs • protein bowls • chicken • protein sandwiches",
     place: "Gyms, fitness centres, sports zones",
     personality: "Performance • Discipline • Fresh energy",
-    on: "#fff",
+    on: "#202020",
   },
   {
     key: "bite",
@@ -30,7 +30,7 @@ export const concepts: Concept[] = [
     whatsOn: "Burgers • fries • loaded sandwiches • wraps",
     place: "Markets, colleges, evening hotspots",
     personality: "Bold • Craveable • Fun",
-    on: "#fff",
+    on: "#fffaf2",
   },
   {
     key: "shake",
@@ -50,7 +50,7 @@ export const concepts: Concept[] = [
     whatsOn: "Coffee • cold coffee • tea • quick beverages",
     place: "Office zones, colleges, commercial districts",
     personality: "Calm • Premium • Social",
-    on: "#fff",
+    on: "#f5f1e8",
   },
   {
     key: "fresh",
@@ -64,7 +64,7 @@ export const concepts: Concept[] = [
   },
 ];
 
-/** Accent CSS variable per concept — proposals live only in app/globals.css. */
+/** Accent CSS variable per concept — the palette lives in app/globals.css. */
 export const conceptColorVar: Record<ConceptKey, string> = {
   pro: "var(--pro)",
   bite: "var(--bite)",

@@ -30,7 +30,7 @@ export default function NotifyForm() {
       const data = (await res.json()) as { ok?: boolean; error?: string };
 
       if (res.ok && data.ok) {
-        setStatus("You're on the list! Check your inbox for a confirmation. 🚚");
+        setStatus("You’re on the list. We’ll be in touch when the first cart lands.");
         form.reset();
       } else {
         setFailed(true);
@@ -48,21 +48,22 @@ export default function NotifyForm() {
     <div>
       <form
         onSubmit={handleSubmit}
-        className="mx-auto mt-8 flex max-w-[520px] flex-col justify-center gap-3 min-[520px]:flex-row"
+        className="mt-8 flex max-w-[560px] flex-col gap-3 min-[560px]:flex-row"
       >
         <input
           required
           type="email"
           name="email"
+          autoComplete="email"
           aria-label="Email"
           placeholder="you@example.com"
-          className="h-12 w-full min-w-0 rounded-full border-[3px] border-(--ink) bg-white px-5 text-[15px] font-bold text-[#202020] placeholder:font-medium placeholder:text-[#20202059] min-[520px]:flex-1"
+          className="h-12 w-full min-w-0 flex-1 rounded-full border border-(--deep-ink)/25 bg-transparent px-5 text-[14px] text-(--deep-ink) outline-none transition-colors duration-300 placeholder:text-(--deep-ink)/35 focus:border-(--deep-ink)/70"
         />
         <button
           {...pointer}
           type="submit"
           disabled={sending}
-          className="h-12 w-full shrink-0 rounded-full border-[3px] border-(--bg) bg-(--ink) px-7 text-[15px] font-extrabold text-(--bg) transition-[box-shadow,transform,opacity] duration-300 hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[4px_4px_0_rgb(255_255_255_/_0.35)] disabled:opacity-60 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-none min-[520px]:w-auto"
+          className="h-12 w-full shrink-0 rounded-full bg-(--deep-ink) px-7 text-[10px] font-semibold uppercase tracking-[0.16em] text-(--deep) transition-[background-color,color,opacity] duration-300 hover:bg-(--c) hover:text-(--on) disabled:cursor-not-allowed disabled:opacity-50 min-[560px]:w-auto"
         >
           {sending ? "Sending…" : "Notify me"}
         </button>
@@ -70,13 +71,16 @@ export default function NotifyForm() {
       {status ? (
         <p
           role="status"
-          className={`mt-5 text-[15px] font-extrabold ${
-            failed ? "text-(--bite)" : ""
+          className={`mt-5 max-w-[520px] text-[13px] leading-relaxed ${
+            failed ? "text-[#ff9c8f]" : "text-(--deep-ink)/65"
           }`}
         >
           {status}
         </p>
       ) : null}
+      <p className="mt-5 text-[10px] uppercase tracking-[0.16em] text-(--deep-ink)/35">
+        No spam. Just one note when we open.
+      </p>
     </div>
   );
 }

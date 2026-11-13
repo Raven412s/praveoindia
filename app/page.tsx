@@ -4,13 +4,14 @@ import Hero from "@/components/Hero";
 import Stats from "@/components/Stats";
 import ConceptPicker from "@/components/ConceptPicker";
 import CartStreet from "@/components/CartStreet";
+import Manifesto from "@/components/Manifesto";
 import HowItWorks from "@/components/HowItWorks";
 import Standard from "@/components/Standard";
 import FindSection from "@/components/FindSection";
 import NotifyForm from "@/components/NotifyForm";
 import Footer from "@/components/Footer";
-import MascotCrew from "@/components/MascotCrew";
 import Reveal from "@/components/Reveal";
+import SectionHeading from "@/components/SectionHeading";
 
 export default function Home() {
   return (
@@ -21,19 +22,18 @@ export default function Home() {
         <Hero />
         <Stats />
 
-        <section id="carts" className="pt-[72px]">
-          <div className="mx-auto w-full max-w-[1160px] px-5">
+        <section id="carts" className="py-24">
+          <div className="mx-auto w-full max-w-[1180px] px-5">
             <Reveal>
-              <p className="text-xs font-extrabold uppercase tracking-[0.16em]">
-                ONE BRAND. FIVE MOODS.
-              </p>
-              <h2 className="mt-3 text-[clamp(32px,5vw,56px)] font-black leading-[1.02] tracking-[-0.02em]">
-                Pick your vybe.
-              </h2>
-              <p className="mt-4 max-w-[600px] text-[17px] opacity-85">
-                Every cart does one thing really well — and wears one colour, so
-                you can spot it from across the street.
-              </p>
+              <SectionHeading
+                eyebrow="One brand. Five moods."
+                title={
+                  <>
+                    Pick your <span className="italic">vybe.</span>
+                  </>
+                }
+                description="Every cart does one thing really well — and wears one colour, so you can spot it from across the street. Choose a concept to explore it."
+              />
             </Reveal>
             <ConceptPicker />
           </div>
@@ -41,20 +41,32 @@ export default function Home() {
 
         <CartStreet />
 
-        <MascotCrew />
+        <Manifesto />
 
         <HowItWorks />
         <Standard />
         <FindSection />
 
-        <section className="border-y-[3px] border-(--ink) bg-(--c) py-16 text-(--on) transition-[background-color,color] duration-300">
-          <div className="mx-auto w-full max-w-[1160px] px-5 text-center">
+        <section id="notify" className="bg-(--deep) py-24 text-(--deep-ink)">
+          <div className="mx-auto grid w-full max-w-[1180px] gap-12 px-5 min-[900px]:grid-cols-[1fr_0.9fr] min-[900px]:items-end">
             <Reveal>
-              <h2 className="text-[clamp(32px,5vw,56px)] font-black leading-[1.02] tracking-[-0.02em]">
-                PRAVEO is landing soon.
-              </h2>
-              <p className="mx-auto mt-3 max-w-[520px] text-[17px]">
-                Be first to know where the first cart shows up.
+              <SectionHeading
+                eyebrow="Coming soon"
+                title={
+                  <>
+                    PRAVEO is
+                    <br />
+                    <span className="italic">landing soon.</span>
+                  </>
+                }
+                dark
+              />
+            </Reveal>
+
+            <Reveal delay={0.08} y={18}>
+              <p className="max-w-[440px] text-[15.5px] leading-[1.7] text-(--deep-ink)/65">
+                Be first to know where the first cart shows up — and which concept
+                is coming to your neighbourhood.
               </p>
               <NotifyForm />
             </Reveal>

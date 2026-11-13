@@ -53,28 +53,28 @@ function StepVisual({ Icon }: { Icon: LucideIcon }) {
   return (
     <div
       data-hiw-visual
-      className="relative grid aspect-square w-full max-w-[200px]
+      className="relative grid aspect-square w-full max-w-[190px]
         place-items-center overflow-hidden rounded-full
-        border border-(--ink)/15 bg-(--card)
-        min-[820px]:max-w-[280px]"
+        border border-(--line) bg-(--card)
+        min-[820px]:max-w-[270px]"
     >
       {/* Single quiet ring */}
-      <div className="absolute inset-[10%] rounded-full border border-(--ink)/10" />
+      <div className="absolute inset-[10%] rounded-full border border-(--ink)/8" />
 
       {/* Ambient colour */}
       <div
         data-hiw-glow
         className="absolute inset-[24%] rounded-full
-          bg-(--c) opacity-15 blur-2xl"
+          bg-(--c) opacity-10 blur-2xl"
       />
 
       {/* Dashed orbit with a single travelling dot */}
       <div
         data-hiw-orbit
         className="absolute inset-[17%] rounded-full
-          border border-dashed border-(--ink)/25"
+          border border-dashed border-(--ink)/18"
       >
-        <span className="absolute left-1/2 top-0 size-2
+        <span className="absolute left-1/2 top-0 size-1.5
           -translate-x-1/2 -translate-y-1/2 rounded-full
           bg-(--c) ring-4 ring-(--card)" />
       </div>
@@ -83,10 +83,10 @@ function StepVisual({ Icon }: { Icon: LucideIcon }) {
       <div
         data-hiw-icon
         className="relative z-10 grid size-[40%] place-items-center
-          rounded-[30%] bg-(--c) text-(--on)
-          shadow-[0_15px_45px_-15px_var(--ink)]"
+          rounded-[24%] bg-(--c) text-(--on)
+          shadow-[0_14px_36px_-20px_var(--ink)]"
       >
-        <Icon className="size-[46%]" strokeWidth={1.7} />
+        <Icon className="size-[46%]" strokeWidth={1.4} />
       </div>
 
       {/* QR scanning line (step 03 only) */}
@@ -161,8 +161,8 @@ export default function HowItWorks() {
         // across the stage, so the story reads as one calm crossfade.
         gsap.set(panels, {
           autoAlpha: 0,
-          y: 36,
-          scale: 0.99,
+          y: 24,
+          scale: 0.995,
         });
 
         gsap.set(panels[0], {
@@ -172,8 +172,8 @@ export default function HowItWorks() {
         });
 
         gsap.set(visuals, {
-          scale: 0.85,
-          rotation: -8,
+          scale: 0.9,
+          rotation: -2,
           autoAlpha: 0,
         });
 
@@ -184,8 +184,8 @@ export default function HowItWorks() {
         });
 
         gsap.set(icons, {
-          scale: 0.6,
-          rotation: -18,
+          scale: 0.75,
+          rotation: -5,
         });
 
         gsap.set(icons[0], {
@@ -194,7 +194,7 @@ export default function HowItWorks() {
         });
 
         gsap.set(orbits, {
-          rotation: -25,
+          rotation: -12,
         });
 
         gsap.set(glows, {
@@ -248,7 +248,7 @@ export default function HowItWorks() {
           scale: 1,
           rotation: 0,
           duration: 0.65,
-          ease: "back.out(1.5)",
+          ease: "power3.out",
         }, 0);
 
         tl.to(glows[0], {
@@ -344,8 +344,8 @@ export default function HowItWorks() {
             visuals[next],
             {
               autoAlpha: 0,
-              scale: 0.85,
-              rotation: -8,
+              scale: 0.9,
+              rotation: -2,
             },
             {
               autoAlpha: 1,
@@ -357,18 +357,18 @@ export default function HowItWorks() {
             "<0.05"
           );
 
-          // Icon pop.
+          // Icon settles in.
           tl.fromTo(
             icons[next],
             {
-              scale: 0.6,
-              rotation: -18,
+              scale: 0.75,
+              rotation: -5,
             },
             {
               scale: 1,
               rotation: 0,
               duration: 0.6,
-              ease: "back.out(1.6)",
+              ease: "power3.out",
             },
             "<0.15"
           );
@@ -437,22 +437,12 @@ export default function HowItWorks() {
             );
           }
 
-          // Loyalty loop: circular movement.
+          // Loyalty loop: a quiet circular drift.
           if (next === 3) {
-            tl.to(
-              icons[next],
-              {
-                rotation: 360,
-                duration: 0.9,
-                ease: "power2.inOut",
-              },
-              "<0.1"
-            );
-
             tl.to(
               orbits[next],
               {
-                rotation: 360,
+                rotation: 90,
                 duration: 1.2,
                 ease: "power1.inOut",
               },
@@ -545,14 +535,14 @@ export default function HowItWorks() {
     <section
       ref={rootRef}
       id="how"
-      className="relative overflow-clip pb-24 pt-4"
+      className="relative overflow-clip pb-24 pt-24"
     >
       {/* Story stage — heading, progress and panels all live in the pin.
           Block on mobile (ScrollTrigger pin-spacing breaks inside flex
           containers); flex column on desktop drives the slide order. */}
       <div
         ref={pinRef}
-        className="relative mx-auto w-full max-w-[1160px] px-5
+        className="relative mx-auto w-full max-w-[1180px] px-5
           min-[820px]:flex min-[820px]:flex-col"
       >
         {/* Pinned stage. Mobile: heading, progress and one story per screen —
@@ -570,21 +560,21 @@ export default function HowItWorks() {
               caption under the stage on desktop */}
           <Reveal className="pb-4 min-[820px]:order-2 min-[820px]:pb-0">
           <div className="flex items-center gap-3">
-            <span className="size-2 rounded-full bg-(--c)" />
-            <p className="text-xs font-black uppercase tracking-[0.2em]">
-              THE PRAVEO EXPERIENCE
+            <span className="h-px w-7 bg-(--c)" />
+            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-(--muted-ink)">
+              The PRAVEO experience
             </p>
           </div>
 
-          <div className="mt-3 flex flex-wrap items-end justify-between gap-5">
-            <h2 className="text-[clamp(34px,5vw,58px)] font-black
-              leading-[0.96] tracking-[-0.045em]">
+          <div className="mt-5 flex flex-wrap items-end justify-between gap-5">
+            <h2 className="font-serif text-[clamp(36px,4.8vw,60px)] font-normal
+              leading-[1.0] tracking-[-0.03em]">
               Good food.
               <br />
               No complicated steps.
             </h2>
 
-            <p className="max-w-[280px] pb-1 text-sm leading-relaxed opacity-65">
+            <p className="max-w-[280px] pb-1 text-[13.5px] leading-[1.65] text-(--muted-ink)">
               Four simple moments between spotting your cart
               and finding your next favourite.
             </p>
@@ -596,13 +586,13 @@ export default function HowItWorks() {
             min-[820px]:order-3 min-[820px]:mb-6 min-[820px]:mt-6">
             <p
               ref={counterRef}
-              className="min-w-[70px] text-[11px] font-black
-                tabular-nums tracking-[0.16em]"
+              className="min-w-[70px] text-[10px] font-semibold
+                tabular-nums tracking-[0.2em] text-(--muted-ink)"
             >
               01 / 04
             </p>
 
-            <div className="h-[2px] flex-1 overflow-hidden bg-(--ink)/10">
+            <div className="h-px flex-1 overflow-hidden bg-(--line)">
               <div
                 ref={barRef}
                 className="h-full origin-left bg-(--c)"
@@ -630,18 +620,18 @@ export default function HowItWorks() {
                 {/* Copy */}
                 <div className="relative z-10">
                   <p className="mb-6 flex items-center gap-3
-                    text-[11px] font-black uppercase tracking-[0.2em] opacity-55">
-                    <span className="h-px w-8 bg-(--c)" />
+                    text-[10px] font-semibold uppercase tracking-[0.22em] text-(--muted-ink)">
+                    <span className="h-px w-7 bg-(--c)" />
                     {step.eyebrow}
                   </p>
 
-                  <h3 className="text-[clamp(54px,8vw,100px)]
-                    font-black leading-[0.88] tracking-[-0.065em]">
+                  <h3 className="font-serif text-[clamp(46px,7vw,86px)]
+                    font-normal leading-[0.92] tracking-[-0.045em]">
                     {step.title}
                   </h3>
 
-                  <p className="mt-6 max-w-[440px] text-[17px]
-                    leading-[1.7] opacity-70 min-[820px]:text-[19px]">
+                  <p className="mt-6 max-w-[440px] text-[15.5px]
+                    leading-[1.75] text-(--muted-ink) min-[820px]:text-[17px]">
                     {step.text}
                   </p>
                 </div>

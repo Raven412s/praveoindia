@@ -2,6 +2,7 @@
 
 import { useCursorElement } from "@/components/globals/cursor/advance-cursor";
 import Reveal from "./Reveal";
+import SectionHeading from "./SectionHeading";
 import { Concept, conceptColorVar, concepts, type ConceptKey } from "@/lib/concepts";
 
 interface PlaceRow {
@@ -34,71 +35,73 @@ function Row({ row }: { row: PlaceRow }) {
   });
 
   return (
-    <tr {...cursor} className="border-t-2 border-(--ink)">
-      <td className="px-4 py-3 text-[15px] font-bold">{row.where}</td>
-      <td className="px-4 py-3 text-[15px]">
+    <tr
+      {...cursor}
+      className="border-b border-(--line) transition-colors duration-300 hover:bg-(--surface)/60"
+    >
+      <td className="px-1 py-5 font-serif text-[20px] leading-none tracking-[-0.015em] min-[640px]:px-4">
+        {row.where}
+      </td>
+      <td className="px-1 py-5 text-[13px] min-[640px]:px-4">
         <span
-          className="mr-2 inline-block size-3 rounded-full border-2 border-(--ink) align-[-1px]"
+          className="mr-2.5 inline-block size-2 rounded-full align-[1px]"
           style={{ background: conceptColorVar[main.key] }}
         />
-        <span className="font-extrabold">{main.name}</span>
+        <span className="font-medium">{main.name}</span>
       </td>
-      <td className="px-4 py-3 text-[15px] font-bold">{also.name}</td>
+      <td className="px-1 py-5 text-[13px] text-(--muted-ink) min-[640px]:px-4">
+        {also.name}
+      </td>
     </tr>
   );
 }
 
 export default function FindSection() {
   return (
-    <section id="find" className="py-20">
-      <div className="mx-auto w-full max-w-[1160px] px-5">
+    <section id="find" className="py-24">
+      <div className="mx-auto w-full max-w-[1180px] px-5">
         <Reveal>
-          <p className="text-xs font-extrabold uppercase tracking-[0.16em]">
-            FIND YOUR PRAVEO
-          </p>
-          <h2 className="mt-3 text-[clamp(32px,5vw,56px)] font-black leading-[1.02] tracking-[-0.02em]">
-            The place decides the cart.
-          </h2>
-          <p className="mt-4 max-w-[600px] text-[17px] opacity-85">
-            We put the right concept where it fits your day. Live map and
-            opening status are coming soon.
-          </p>
+          <SectionHeading
+            eyebrow="Find your PRAVEO"
+            title="The place decides the cart."
+            description="We put the right concept where it fits your day. Live cart locations, opening status and directions are coming soon."
+          />
         </Reveal>
 
-        <Reveal className="mt-10" y={32}>
-        <div className="overflow-x-auto rounded-[20px] border-2 border-(--ink) bg-(--card)">
-          <table className="w-full border-collapse text-left">
-            <thead>
-              <tr className="bg-(--ink) text-(--bg)">
-                <th
-                  scope="col"
-                  className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-[0.14em]"
-                >
-                  Where
-                </th>
-                <th
-                  scope="col"
-                  className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-[0.14em]"
-                >
-                  Main cart
-                </th>
-                <th
-                  scope="col"
-                  className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-[0.14em]"
-                >
-                  Also
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {ROWS.map((row) => (
-                <Row key={row.where} row={row} />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Reveal className="mt-12" y={24}>
+          <div className="overflow-x-auto border-t border-(--line)">
+            <table className="w-full min-w-[520px] border-collapse text-left">
+              <thead>
+                <tr>
+                  <th
+                    scope="col"
+                    className="px-1 py-4 text-[9px] font-semibold uppercase tracking-[0.2em] text-(--muted-ink) min-[640px]:px-4"
+                  >
+                    Where
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-1 py-4 text-[9px] font-semibold uppercase tracking-[0.2em] text-(--muted-ink) min-[640px]:px-4"
+                  >
+                    Main cart
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-1 py-4 text-[9px] font-semibold uppercase tracking-[0.2em] text-(--muted-ink) min-[640px]:px-4"
+                  >
+                    Also nearby
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {ROWS.map((row) => (
+                  <Row key={row.where} row={row} />
+                ))}
+              </tbody>
+            </table>
+          </div>
         </Reveal>
-        <p className="mt-3 text-xs opacity-65">
+        <p className="mt-4 text-[11px] leading-relaxed text-(--muted-ink)">
           Placeholder: real cart locations, hours and map will plug in here.
         </p>
       </div>
